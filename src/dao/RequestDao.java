@@ -1,8 +1,7 @@
 package dao;
 
 import entity.Request;
-import entity.Status;
-import jdk.jshell.Snippet;
+import entity.RequestStatus;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -32,7 +31,7 @@ public class RequestDao implements IDao<Request> {
         }
     }
 
-    public void closeConnection(){
+    public void closeConnection() {
         try {
             this.connection.close();
         } catch (SQLException e) {
@@ -48,7 +47,7 @@ public class RequestDao implements IDao<Request> {
                 "employee INTEGER" +
                 "status VARCHAR NOT NULL" +
                 "leadTime DATETIME);";
-        try (Statement statement = this.connection.createStatement()){
+        try (Statement statement = this.connection.createStatement()) {
             int row = statement.executeUpdate(sql);
             System.out.println(row);
         } catch (SQLException e) {
@@ -63,7 +62,7 @@ public class RequestDao implements IDao<Request> {
             statement.setInt(1, request.getId());
             statement.setInt(2, request.getClientId());
             statement.setDate(3, (Date) request.getCreationTime());
-            statement.setString(4, request.getStatus().name());
+            statement.setString(4, request.getRequestStatus().name());
             int row = statement.executeUpdate();
             System.out.println(row);
         } catch (SQLException e) {
@@ -83,7 +82,7 @@ public class RequestDao implements IDao<Request> {
                 request.setId(resultSet.getInt("clientId"));
                 request.setCreationTime(resultSet.getDate("creationTime"));
                 request.setEmployee(resultSet.getInt("employee"));
-                request.setStatus(Status.valueOf(resultSet.getString("status")));
+                request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
                 request.setLeadTime(resultSet.getDate("leadTime"));
                 requestList.add(request);
             }
@@ -102,11 +101,11 @@ public class RequestDao implements IDao<Request> {
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
-            request.setId(resultSet.getInt("id"));
-            request.setId(resultSet.getInt("clientId"));
+            request.setId(id);
+            request.setClientId(resultSet.getInt("clientId"));
             request.setCreationTime(resultSet.getDate("creationTime"));
             request.setEmployee(resultSet.getInt("employee"));
-            request.setStatus(Status.valueOf(resultSet.getString("status")));
+            request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
             request.setLeadTime(resultSet.getDate("leadTime"));
         } catch (SQLException e) {
             e.printStackTrace();
@@ -114,8 +113,31 @@ public class RequestDao implements IDao<Request> {
         return request;
     }
 
+    public List<Request> getByClientId(int clientId) {
+        String sql = "SELECT * FROM Request WHERE clientId=?;";
+        try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
+            statement.setInt(1, clientId);
+            List<Request> requestList = new ArrayList<>();
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Request request = new Request();
+                request.setId(resultSet.getInt("id"));
+                request.setClientId(clientId);
+                request.setCreationTime(resultSet.getDate("creationTime"));
+                request.setEmployee(resultSet.getInt("employee"));
+                request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
+                request.setLeadTime(resultSet.getDate("leadTime"));
+                requestList.add(request);
+            }
+            return requestList;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Collections.emptyList();
+    }
+
     @Override
-    public <Status> void update(int id, Status status) {
+    public <RequestStatus> void update(int id, RequestStatus status) {
         String sql = "UPDATE Request SET id=?, status=? WHERE id=?";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);

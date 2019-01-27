@@ -1,6 +1,6 @@
 package entity;
 
-public enum Status {
+public enum RequestStatus {
     CREATED,
     IN_PROCESSIHNG,
     CANCELED,

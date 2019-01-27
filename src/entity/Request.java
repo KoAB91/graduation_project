@@ -13,7 +13,7 @@ public class Request {
     // время выполнения заявки
     private Date leadTime;
     // статус заявки
-    private Status status;
+    private RequestStatus requestStatus;
     // сотрудник, который взял заявку в обработку
     private int employeeId;
 
@@ -49,12 +49,12 @@ public class Request {
         this.leadTime = leadTime;
     }
 
-    public Status getStatus() {
-        return status;
+    public RequestStatus getRequestStatus() {
+        return requestStatus;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setRequestStatus(RequestStatus requestStatus) {
+        this.requestStatus = requestStatus;
     }
 
     public int getEmployeeId() {
@@ -70,7 +70,7 @@ public class Request {
         return "Request{" +
                 "creationTime=" + creationTime +
                 ", leadTime=" + leadTime +
-                ", status=" + status +
+                ", requestStatus=" + requestStatus +
                 ", employeeId=" + employeeId +
                 '}';
     }
