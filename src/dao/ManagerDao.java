@@ -1,27 +1,27 @@
 package dao;
 
-import entity.*;
+import entity.Manager;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class OperatorDao implements IDao<Operator> {
+public class ManagerDao implements IDao<Manager> {
 
     private static String connectUrl = MyConfig.setConfig("url");
     private static String user = MyConfig.setConfig("user");
     private static String password = MyConfig.setConfig("password");
     private Connection connection;
-    private static OperatorDao instance = null;
+    private static ManagerDao instance = null;
 
-    public static OperatorDao getInstance() {
+    public static ManagerDao getInstance() {
         if (instance == null)
-            instance = new OperatorDao();
+            instance = new ManagerDao();
         return instance;
     }
 
-    private OperatorDao() {
+    private ManagerDao() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             this.connection = DriverManager.getConnection(connectUrl, user, password);
@@ -39,7 +39,7 @@ public class OperatorDao implements IDao<Operator> {
     }
 
     public void createTable() {
-        String sql = "CREATE TABLE IF NOT EXISTS Operator (" +
+        String sql = "CREATE TABLE IF NOT EXISTS Manager (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL" +
                 "requestId INTEGER NOT NULL);";
         try (Statement statement = this.connection.createStatement()) {
@@ -51,11 +51,11 @@ public class OperatorDao implements IDao<Operator> {
     }
 
     @Override
-    public void add(Operator operator) {
-        String sql = "INSERT INTO Operator (id, requestId)" + "VALUES (?, ?);";
+    public void add(Manager manager) {
+        String sql = "INSERT INTO Manager (id, requestId)" + "VALUES (?, ?);";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
-            statement.setInt(1, operator.getId());
-            statement.setInt(2, operator.getRequestId());
+            statement.setInt(1, manager.getId());
+            statement.setInt(2, manager.getRequestId());
             int row = statement.executeUpdate();
             System.out.println(row);
         } catch (SQLException e) {
@@ -64,18 +64,18 @@ public class OperatorDao implements IDao<Operator> {
     }
 
     @Override
-    public List<Operator> getAll() {
-        String sql = "SELECT * FROM Operator;";
+    public List<Manager> getAll() {
+        String sql = "SELECT * FROM Manager;";
         try (Statement statement = this.connection.createStatement()) {
-            List<Operator> operatorList = new ArrayList<>();
+            List<Manager> managerList = new ArrayList<>();
             ResultSet resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
-                Operator operator = new Operator();
-                operator.setId(resultSet.getInt("id"));
-                operator.setRequestId(resultSet.getInt("requestId"));
-                operatorList.add(operator);
+                Manager manager = new Manager();
+                manager.setId(resultSet.getInt("id"));
+                manager.setRequestId(resultSet.getInt("requestId"));
+                managerList.add(manager);
             }
-            return operatorList;
+            return managerList;
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -84,31 +84,31 @@ public class OperatorDao implements IDao<Operator> {
     }
 
     @Override
-    public Operator getById(int id) {
-        String sql = "SELECT * FROM Operator WHERE id=?;";
-        Operator operator = new Operator();
+    public Manager getById(int id) {
+        String sql = "SELECT * FROM Manager WHERE id=?;";
+        Manager manager = new Manager();
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
-            operator.setId(id);
-            operator.setRequestId(resultSet.getInt("requestId"));
+            manager.setId(id);
+            manager.setRequestId(resultSet.getInt("requestId"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return operator;
+        return manager;
     }
 
-    public List<Operator> getNotBusy() {
-        String sql = "SELECT * FROM Operator WHERE requestId=NULL;";
+    public List<Manager> getNotBusy() {
+        String sql = "SELECT * FROM Manager WHERE requestId=NULL;";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
-            List<Operator> operatorList = new ArrayList<>();
+            List<Manager> managerList = new ArrayList<>();
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                Operator operator = new Operator();
-                operator.setId(resultSet.getInt("id"));
-                operatorList.add(operator);
+                Manager manager = new Manager();
+                manager.setId(resultSet.getInt("id"));
+                managerList.add(manager);
             }
-            return operatorList;
+            return managerList;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -117,7 +117,7 @@ public class OperatorDao implements IDao<Operator> {
 
     @Override
     public <Integer> void update(int id, Integer requestId) {
-        String sql = "UPDATE Operator SET requestId=? WHERE id=?";
+        String sql = "UPDATE Manager SET requestId=? WHERE id=?";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, (int) requestId);
             statement.setInt(2, id);
@@ -130,7 +130,7 @@ public class OperatorDao implements IDao<Operator> {
 
     @Override
     public void delete(int id) {
-        String sql = "DELETE FROM Operator WHERE id=?;";
+        String sql = "DELETE FROM Manager WHERE id=?;";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             statement.execute();

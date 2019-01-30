@@ -2,7 +2,6 @@ package dao;
 
 import entity.Request;
 import entity.RequestStatus;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,9 +9,9 @@ import java.util.List;
 
 public class RequestDao implements IDao<Request> {
 
-    private static String connectUrl = "jdbc:mysql://localhost:3306/courses?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
-    private static String user = "newuser";
-    private static String password = "password";
+    private static String connectUrl = MyConfig.setConfig("url");
+    private static String user = MyConfig.setConfig("user");
+    private static String password = MyConfig.setConfig("password");
     private Connection connection;
     private static RequestDao instance = null;
 
@@ -41,12 +40,12 @@ public class RequestDao implements IDao<Request> {
 
     public void createTable() {
         String sql = "CREATE TABLE IF NOT EXISTS Request (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+                "id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL," +
                 "clientId INTEGER NOT NULL," +
-                "creationTime DATETIME NOT NULL" +
-                "employee INTEGER" +
-                "status VARCHAR NOT NULL" +
-                "leadTime DATETIME);";
+                "creationTime TIMESTAMP NOT NULL," +
+                "employee INTEGER," +
+                "status VARCHAR(20) NOT NULL," +
+                "leadTime TIMESTAMP);";
         try (Statement statement = this.connection.createStatement()) {
             int row = statement.executeUpdate(sql);
             System.out.println(row);
@@ -57,12 +56,11 @@ public class RequestDao implements IDao<Request> {
 
     @Override
     public void add(Request request) {
-        String sql = "INSERT INTO Request (id, clientId, creationTime, status)" + "VALUES (?, ?, ?, ?);";
+        String sql = "INSERT INTO Request (clientId, creationTime, status)" + "VALUES (?, ?, ?);";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
-            statement.setInt(1, request.getId());
-            statement.setInt(2, request.getClientId());
-            statement.setDate(3, (Date) request.getCreationTime());
-            statement.setString(4, request.getRequestStatus().name());
+            statement.setInt(1, request.getClientId());
+            statement.setTimestamp(2, new Timestamp(request.getCreationTime().getTime()));
+            statement.setString(3, request.getRequestStatus().name());
             int row = statement.executeUpdate();
             System.out.println(row);
         } catch (SQLException e) {
@@ -80,10 +78,10 @@ public class RequestDao implements IDao<Request> {
                 Request request = new Request();
                 request.setId(resultSet.getInt("id"));
                 request.setId(resultSet.getInt("clientId"));
-                request.setCreationTime(resultSet.getDate("creationTime"));
+                request.setCreationTime(new Date(resultSet.getDate("creationTime").getTime()));
                 request.setEmployee(resultSet.getInt("employee"));
                 request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
-                request.setLeadTime(resultSet.getDate("leadTime"));
+                request.setLeadTime(new Date(resultSet.getDate("leadTime").getTime()));
                 requestList.add(request);
             }
             return requestList;
@@ -103,10 +101,10 @@ public class RequestDao implements IDao<Request> {
             ResultSet resultSet = statement.executeQuery();
             request.setId(id);
             request.setClientId(resultSet.getInt("clientId"));
-            request.setCreationTime(resultSet.getDate("creationTime"));
+            request.setCreationTime(new Date(resultSet.getDate("creationTime").getTime()));
             request.setEmployee(resultSet.getInt("employee"));
             request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
-            request.setLeadTime(resultSet.getDate("leadTime"));
+            request.setLeadTime(new Date(resultSet.getDate("leadTime").getTime()));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -123,7 +121,7 @@ public class RequestDao implements IDao<Request> {
                 Request request = new Request();
                 request.setId(resultSet.getInt("id"));
                 request.setClientId(clientId);
-                request.setCreationTime(resultSet.getDate("creationTime"));
+                request.setCreationTime(new Date(resultSet.getDate("creationTime").getTime()));
                 request.setEmployee(resultSet.getInt("employee"));
                 request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
                 request.setLeadTime(resultSet.getDate("leadTime"));
