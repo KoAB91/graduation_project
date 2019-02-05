@@ -6,6 +6,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class ManagerDao implements IDao<Manager> {
 
@@ -40,8 +42,8 @@ public class ManagerDao implements IDao<Manager> {
 
     public void createTable() {
         String sql = "CREATE TABLE IF NOT EXISTS Manager (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL" +
-                "requestId INTEGER NOT NULL);";
+                "id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL," +
+                "requestId INTEGER);";
         try (Statement statement = this.connection.createStatement()) {
             int row = statement.executeUpdate(sql);
             System.out.println(row);
@@ -90,29 +92,28 @@ public class ManagerDao implements IDao<Manager> {
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
-            manager.setId(id);
-            manager.setRequestId(resultSet.getInt("requestId"));
+            while (resultSet.next()) {
+                manager.setId(id);
+                manager.setRequestId(resultSet.getInt("requestId"));
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return manager;
     }
 
-    public List<Manager> getNotBusy() {
-        String sql = "SELECT * FROM Manager WHERE requestId=NULL;";
+    public Manager getNotBusy() {
+        String sql = "SELECT * FROM Manager WHERE requestId=0;";
+        Manager manager = new Manager();
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
-            List<Manager> managerList = new ArrayList<>();
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                Manager manager = new Manager();
                 manager.setId(resultSet.getInt("id"));
-                managerList.add(manager);
             }
-            return managerList;
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return Collections.emptyList();
+        return manager;
     }
 
     @Override
@@ -136,6 +137,24 @@ public class ManagerDao implements IDao<Manager> {
             statement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    public BlockingQueue<Manager> getNotWorking() {
+        String sql = "SELECT * FROM Manager WHERE requestId=0;";
+        try (Statement statement = this.connection.createStatement()) {
+            BlockingQueue<Manager> managerList = new ArrayBlockingQueue<>(5);
+            ResultSet resultSet = statement.executeQuery(sql);
+            while (resultSet.next()) {
+                Manager manager = new Manager();
+                manager.setId(resultSet.getInt("id"));
+                managerList.add(manager);
+            }
+            return managerList;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayBlockingQueue<>(0);
         }
     }
 }

@@ -2,7 +2,7 @@ package entity;
 
 public enum RequestStatus {
     CREATED,
-    IN_PROCESSIHNG,
+    IN_PROCESSING,
     CANCELED,
     DONE
 }

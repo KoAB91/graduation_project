@@ -6,6 +6,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class OperatorDao implements IDao<Operator> {
 
@@ -40,8 +42,8 @@ public class OperatorDao implements IDao<Operator> {
 
     public void createTable() {
         String sql = "CREATE TABLE IF NOT EXISTS Operator (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL" +
-                "requestId INTEGER NOT NULL);";
+                "id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL," +
+                "requestId INTEGER);";
         try (Statement statement = this.connection.createStatement()) {
             int row = statement.executeUpdate(sql);
             System.out.println(row);
@@ -90,29 +92,28 @@ public class OperatorDao implements IDao<Operator> {
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
-            operator.setId(id);
-            operator.setRequestId(resultSet.getInt("requestId"));
+            while (resultSet.next()) {
+                operator.setId(id);
+                operator.setRequestId(resultSet.getInt("requestId"));
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return operator;
     }
 
-    public List<Operator> getNotBusy() {
-        String sql = "SELECT * FROM Operator WHERE requestId=NULL;";
+    public Operator getNotBusy() {
+        String sql = "SELECT * FROM Operator WHERE requestId=0 LIMIT 0,1;";
+        Operator operator = new Operator();
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
-            List<Operator> operatorList = new ArrayList<>();
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                Operator operator = new Operator();
                 operator.setId(resultSet.getInt("id"));
-                operatorList.add(operator);
             }
-            return operatorList;
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return Collections.emptyList();
+        return operator;
     }
 
     @Override
@@ -136,6 +137,24 @@ public class OperatorDao implements IDao<Operator> {
             statement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    public BlockingQueue<Operator> getNotWorking() {
+        String sql = "SELECT * FROM Operator WHERE requestId=0;";
+        try (Statement statement = this.connection.createStatement()) {
+            BlockingQueue<Operator> operatorList = new ArrayBlockingQueue<>(10);
+            ResultSet resultSet = statement.executeQuery(sql);
+            while (resultSet.next()) {
+                Operator operator = new Operator();
+                operator.setId(resultSet.getInt("id"));
+                operatorList.add(operator);
+            }
+            return operatorList;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayBlockingQueue<>(0);
         }
     }
 }

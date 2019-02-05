@@ -1,7 +1,11 @@
 package entity;
 
 public class Employee {
+
+    // id сотрудника
     private int id;
+
+    // id заявки, которую он выполняет
     private int requestId;
 
 
@@ -20,4 +24,6 @@ public class Employee {
     public void setRequestId(int requestId) {
         this.requestId = requestId;
     }
+
+
 }

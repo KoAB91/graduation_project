@@ -10,7 +10,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public class ClientHandler implements Runnable{
 
@@ -24,29 +24,15 @@ public class ClientHandler implements Runnable{
     public void run() {
 
         try {
-            // инициируем каналы общения в сокете, для сервера
-            // канал записи в сокет следует инициализировать сначала канал чтения для избежания блокировки выполнения программы на ожидании заголовка в сокете
             DataOutputStream out = new DataOutputStream(clientDialog.getOutputStream());
-
-            // канал чтения из сокета
             DataInputStream in = new DataInputStream(clientDialog.getInputStream());
-
-            System.out.println("DataInputStream created");
-            System.out.println("DataOutputStream  created");
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // основная рабочая часть //
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             // начинаем диалог с подключенным клиентом в цикле, пока сокет не
             // закрыт клиентом
             while (!clientDialog.isClosed()) {
                 System.out.println("Server reading from channel");
 
-                // серверная нить ждёт в канале чтения (inputstream) получения
-                // данных клиента после получения данных считывает их
                 String entry = in.readUTF();
-
-                // и выводит в консоль
                 System.out.println("READ from clientDialog message - " + entry);
 
                 // инициализация проверки условия продолжения работы с клиентом
@@ -72,17 +58,20 @@ public class ClientHandler implements Runnable{
                 ClientDao clientDao = ClientDao.getInstance();
                 clientDao.createTable();
                 clientDao.add(client);
+                System.out.println("Клиент " + client.getLogin() + " создан и добавлен");
 
                 // создаем новую заявку
                 Request request = new Request();
                 request.setClientId(client.getId());
-                request.setCreationTime(new Date());
+                request.setCreationTime(LocalDateTime.now());
                 request.setRequestStatus(RequestStatus.CREATED);
+                request.setLeadTime(40);
 
                 // добавляем ее в базу
                 RequestDao requestDao = RequestDao.getInstance();
                 requestDao.createTable();
                 requestDao.add(request);
+                System.out.println("Заявка " + request.getId() + " создана и добавлена");
 
                 // отвечаем клиенту
                 out.writeUTF("Ваша заявка принята. ");
@@ -94,9 +83,6 @@ public class ClientHandler implements Runnable{
                 // возвращаемся в началло для считывания нового сообщения
             }
 
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // основная рабочая часть //
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             // если условие выхода - верно выключаем соединения
             System.out.println("Client disconnected");

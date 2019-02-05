@@ -1,6 +1,6 @@
 package entity;
 
-import java.util.Date;
+import java.time.*;
 
 public class Request {
 
@@ -9,13 +9,17 @@ public class Request {
     // id клиента
     private int clientId;
     //время создания заявки
-    private Date creationTime;
+    private LocalDateTime creationTime;
+    // время начала обработки заявки
+    private LocalDateTime startProcTime;
     // время выполнения заявки
-    private Date leadTime;
+    private int leadTime;
+    // время окончания выполнения заявки
+    private LocalDateTime endTime;
     // статус заявки
     private RequestStatus requestStatus;
     // сотрудник, который взял заявку в обработку
-    private int employeeId;
+    private String employee;
 
     public int getId() {
         return id;
@@ -33,19 +37,19 @@ public class Request {
         this.clientId = clientId;
     }
 
-    public Date getCreationTime() {
+    public LocalDateTime getCreationTime() {
         return creationTime;
     }
 
-    public void setCreationTime(Date creationTime) {
+    public void setCreationTime(LocalDateTime creationTime) {
         this.creationTime = creationTime;
     }
 
-    public Date getLeadTime() {
+    public int getLeadTime() {
         return leadTime;
     }
 
-    public void setLeadTime(Date leadTime) {
+    public void setLeadTime(int leadTime) {
         this.leadTime = leadTime;
     }
 
@@ -57,21 +61,41 @@ public class Request {
         this.requestStatus = requestStatus;
     }
 
-    public int getEmployeeId() {
-        return employeeId;
+    public String getEmployee() {
+        return employee;
     }
 
-    public void setEmployee(int employeeId) {
-        this.employeeId = employeeId;
+    public void setEmployee(String employee) {
+        this.employee = employee;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public LocalDateTime getStartProcTime() {
+        return startProcTime;
+    }
+
+    public void setStartProcTime(LocalDateTime startProcTime) {
+        this.startProcTime = startProcTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
     }
 
     @Override
     public String toString() {
         return "Request{" +
-                "creationTime=" + creationTime +
+                "id=" + id +
+                ", clientId=" + clientId +
+                ", creationTime=" + creationTime +
+                ", startProcTime=" + startProcTime +
                 ", leadTime=" + leadTime +
+                ", endTime=" + endTime +
                 ", requestStatus=" + requestStatus +
-                ", employeeId=" + employeeId +
+                ", employee='" + employee + '\'' +
                 '}';
     }
 }

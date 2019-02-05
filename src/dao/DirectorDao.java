@@ -40,8 +40,8 @@ public class DirectorDao implements IDao<Director> {
 
     public void createTable() {
         String sql = "CREATE TABLE IF NOT EXISTS Director (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL" +
-                "requestId INTEGER NOT NULL);";
+                "id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL," +
+                "requestId INTEGER);";
         try (Statement statement = this.connection.createStatement()) {
             int row = statement.executeUpdate(sql);
             System.out.println(row);
@@ -90,36 +90,35 @@ public class DirectorDao implements IDao<Director> {
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
-            director.setId(id);
-            director.setRequestId(resultSet.getInt("requestId"));
+            while (resultSet.next()) {
+                director.setId(id);
+                director.setRequestId(resultSet.getInt("requestId"));
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return director;
     }
 
-    public List<Director> getNotBusy() {
-        String sql = "SELECT * FROM Director WHERE requestId=NULL;";
+    public Director getNotBusy() {
+        String sql = "SELECT * FROM Director WHERE requestId=0;";
+        Director director = new Director();
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
-            List<Director> directorList = new ArrayList<>();
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                Director director = new Director();
                 director.setId(resultSet.getInt("id"));
-                directorList.add(director);
             }
-            return directorList;
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return Collections.emptyList();
+        return director;
     }
 
     @Override
     public <Integer> void update(int id, Integer requestId) {
         String sql = "UPDATE Director SET requestId=? WHERE id=?";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
-            statement.setInt(1, (int) requestId);
+            statement.setInt(1, ((int) requestId));
             statement.setInt(2, id);
             int row = statement.executeUpdate();
             System.out.println(row);

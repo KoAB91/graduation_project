@@ -2,6 +2,7 @@ package dao;
 
 import entity.Request;
 import entity.RequestStatus;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,9 +44,10 @@ public class RequestDao implements IDao<Request> {
                 "id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL," +
                 "clientId INTEGER NOT NULL," +
                 "creationTime TIMESTAMP NOT NULL," +
-                "employee INTEGER," +
+                "leadTime INTEGER NOT NULL," +
+                "employee VARCHAR(20)," +
                 "status VARCHAR(20) NOT NULL," +
-                "leadTime TIMESTAMP);";
+                "endTime TIMESTAMP);";
         try (Statement statement = this.connection.createStatement()) {
             int row = statement.executeUpdate(sql);
             System.out.println(row);
@@ -56,11 +58,12 @@ public class RequestDao implements IDao<Request> {
 
     @Override
     public void add(Request request) {
-        String sql = "INSERT INTO Request (clientId, creationTime, status)" + "VALUES (?, ?, ?);";
+        String sql = "INSERT INTO Request (clientId, creationTime, leadTime, status)" + "VALUES (?, ?, ?, ?);";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, request.getClientId());
-            statement.setTimestamp(2, new Timestamp(request.getCreationTime().getTime()));
-            statement.setString(3, request.getRequestStatus().name());
+            statement.setTimestamp(2, Timestamp.valueOf(request.getCreationTime()));
+            statement.setInt(3, request.getLeadTime());
+            statement.setString(4, request.getRequestStatus().name());
             int row = statement.executeUpdate();
             System.out.println(row);
         } catch (SQLException e) {
@@ -78,10 +81,11 @@ public class RequestDao implements IDao<Request> {
                 Request request = new Request();
                 request.setId(resultSet.getInt("id"));
                 request.setId(resultSet.getInt("clientId"));
-                request.setCreationTime(new Date(resultSet.getDate("creationTime").getTime()));
-                request.setEmployee(resultSet.getInt("employee"));
+                request.setCreationTime(resultSet.getTimestamp("creationTime").toLocalDateTime());
+                request.setLeadTime(resultSet.getInt("leadTime"));
+                request.setEmployee(resultSet.getString("employee"));
                 request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
-                request.setLeadTime(new Date(resultSet.getDate("leadTime").getTime()));
+//                request.setEndTime(resultSet.getTimestamp("endTime").toLocalDateTime());
                 requestList.add(request);
             }
             return requestList;
@@ -94,17 +98,18 @@ public class RequestDao implements IDao<Request> {
 
     @Override
     public Request getById(int id) {
-        String sql = "SELECT * FROM Request WHERE id=?;";
+        String sql = "SELECT * FROM Request WHERE id=? LIMIT 1;";
         Request request = new Request();
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
             request.setId(id);
             request.setClientId(resultSet.getInt("clientId"));
-            request.setCreationTime(new Date(resultSet.getDate("creationTime").getTime()));
-            request.setEmployee(resultSet.getInt("employee"));
+            request.setCreationTime(resultSet.getTimestamp("creationTime").toLocalDateTime());
+            request.setLeadTime(resultSet.getInt("leadTime"));
+            request.setEmployee(resultSet.getString("employee"));
             request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
-            request.setLeadTime(new Date(resultSet.getDate("leadTime").getTime()));
+//            request.setEndTime(resultSet.getTimestamp("endTime").toLocalDateTime());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -121,10 +126,11 @@ public class RequestDao implements IDao<Request> {
                 Request request = new Request();
                 request.setId(resultSet.getInt("id"));
                 request.setClientId(clientId);
-                request.setCreationTime(new Date(resultSet.getDate("creationTime").getTime()));
-                request.setEmployee(resultSet.getInt("employee"));
+                request.setCreationTime(resultSet.getTimestamp("creationTime").toLocalDateTime());
+                request.setLeadTime(resultSet.getInt("leadTime"));
+                request.setEmployee(resultSet.getString("employee"));
                 request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
-                request.setLeadTime(resultSet.getDate("leadTime"));
+//                request.setEndTime(resultSet.getTimestamp("endTime").toLocalDateTime());
                 requestList.add(request);
             }
             return requestList;
@@ -134,13 +140,33 @@ public class RequestDao implements IDao<Request> {
         return Collections.emptyList();
     }
 
+    public Request getByStatus(RequestStatus status) {
+        String sql = "SELECT * FROM Request WHERE status=? LIMIT 0,1;";
+        Request request = new Request();
+        try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
+            statement.setString(1, status.toString());
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                request.setId(resultSet.getInt("id"));
+                request.setClientId(resultSet.getInt("clientId"));
+                request.setCreationTime(resultSet.getTimestamp("creationTime").toLocalDateTime());
+                request.setLeadTime(resultSet.getInt("leadTime"));
+                request.setEmployee(resultSet.getString("employee"));
+                request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
+//                request.setEndTime(resultSet.getTimestamp("endTime").toLocalDateTime());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return request;
+    }
+
     @Override
     public <RequestStatus> void update(int id, RequestStatus status) {
-        String sql = "UPDATE Request SET id=?, status=? WHERE id=?";
+        String sql = "UPDATE Request SET status=? WHERE id=?";
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
-            statement.setInt(1, id);
-            statement.setString(2, status.toString());
-            statement.setInt(3, id);
+            statement.setString(1, status.toString());
+            statement.setInt(2, id);
             int row = statement.executeUpdate();
             System.out.println(row);
         } catch (SQLException e) {
@@ -154,6 +180,43 @@ public class RequestDao implements IDao<Request> {
         try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Request> getAllByStatus(RequestStatus status) {
+        String sql = "SELECT * FROM Request WHERE status=?;";
+        try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
+            statement.setString(1, status.toString());
+            List<Request> requestList = new ArrayList<>();
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Request request = new Request();
+                request.setId(resultSet.getInt("id"));
+                request.setClientId(resultSet.getInt("clientId"));
+                request.setCreationTime(resultSet.getTimestamp("creationTime").toLocalDateTime());
+                request.setLeadTime(resultSet.getInt("leadTime"));
+                request.setEmployee(resultSet.getString("employee"));
+                request.setRequestStatus(RequestStatus.valueOf(resultSet.getString("status")));
+//                request.setEndTime(resultSet.getTimestamp("endTime").toLocalDateTime());
+                requestList.add(request);
+            }
+            return requestList;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Collections.emptyList();
+    }
+
+    public  void setEmployee(int id, String employeeRole, int employeeId) {
+        String sql = "UPDATE Request SET employee=? WHERE id=?";
+        String employee = employeeRole + "_" + String.valueOf(employeeId);
+        try (PreparedStatement statement = this.connection.prepareStatement(sql)) {
+            statement.setString(1, employeeRole + " " + employeeId);
+            statement.setInt(2, id);
+            int row = statement.executeUpdate();
+            System.out.println(row);
         } catch (SQLException e) {
             e.printStackTrace();
         }
